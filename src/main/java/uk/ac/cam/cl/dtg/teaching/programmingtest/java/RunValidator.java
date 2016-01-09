@@ -3,7 +3,6 @@ package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +24,7 @@ public class RunValidator {
 				List<HarnessStep> logItems = objectMapper.readValue(System.in, new TypeReference<List<HarnessStep>>() {});
 				Result result = validate(validatorClass,logItems, objectMapper);
 				System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+//				System.out.println(objectMapper.writeValueAsString(result));
 			} catch (JsonParseException e) {
 				objectMapper.writeValue(System.out, ImmutableList.of(HarnessStep.newMessage("Failed to read input: "+e.getMessage()), HarnessStep.newState("Exception",e)));
 			}
@@ -47,7 +47,7 @@ public class RunValidator {
 	
 	public static Result validate(String validatorClass, List<HarnessStep> logItems, ObjectMapper o) throws JsonParseException, JsonMappingException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {		
 
-		Map<String,Object> tests = new HashMap<String,Object>() {
+		Map<String,Object> measurements = new HashMap<String,Object>() {
 			private static final long serialVersionUID = 1L;
 			@Override
 			public Object get(Object key) {	
@@ -59,8 +59,8 @@ public class RunValidator {
 		};
 		
 		for(HarnessStep logItem : logItems) {
-			if (logItem.getType().equals(HarnessStep.TYPE_TEST)) {
-				tests.put(logItem.getId(),logItem.getActual());
+			if (logItem.getType().equals(HarnessStep.TYPE_MEASUREMENT)) {
+				measurements.put(logItem.getId(),logItem.getActual());
 			}
 		}
 		
@@ -68,47 +68,17 @@ public class RunValidator {
 		Class<? extends Validator> c = (Class<? extends Validator>)Class.forName(validatorClass);
 		Validator validator = c.newInstance();
 		
-		String resultStatus = Result.STATUS_PASS;
-		String overallMessage;
-		int pass = 0;
-		int fail = 0;
-		int warn = 0;
-		List<ResultStep> composed = new LinkedList<>();
+		Result r = new Result();
 		try {
-			Map<String,ValidationStep> results  = validator.validate(Collections.unmodifiableMap(tests));
-			for(HarnessStep logItem : logItems) {
-				ValidationStep validationStep = null;
-				if (logItem.getType().equals(HarnessStep.TYPE_TEST)) {
-					validationStep = results.get(logItem.getId());
-					if (validationStep == null) {
-						validationStep = new ValidationStep(ValidationStep.STATUS_FAIL, "Test result not present");
-					}
-					
-					if (validationStep.getStatus().equals(ValidationStep.STATUS_FAIL)) {
-						fail++;
-					}
-					else if (validationStep.getStatus().equals(ValidationStep.STATUS_WARNING)) {
-						warn++;
-					}
-					else if (validationStep.getStatus().equals(ValidationStep.STATUS_PASS)) {
-						pass++;
-					}
-				}
-				composed.add(new ResultStep(logItem, validationStep));
-			}
+			r.setResults(validator.validate(Collections.unmodifiableMap(measurements)));
+			r.setStatus("COMPLETED");
 			
-			if (fail > 0) {
-				resultStatus = Result.STATUS_FAIL;
-			} else if (warn > 0) {
-				resultStatus = Result.STATUS_WARNING;
-			}
-			overallMessage = String.format("Tests complete: %d passes, %d passed with warning, %d failed",pass,warn,fail);
 		}
-		catch (MissingHarnessStepError e) {
-			resultStatus = Result.STATUS_FAIL;
-			overallMessage = e.getMessage();
+		catch (Throwable e) {
+			r.setDiagnosticMessage(e.getMessage());
+			r.setStatus("FAILED");
 		}
-		return new Result(resultStatus,overallMessage,null,composed);
+		return r;
 	}
 
 }

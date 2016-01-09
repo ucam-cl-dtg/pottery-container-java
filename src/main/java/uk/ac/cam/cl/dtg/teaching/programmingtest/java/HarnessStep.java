@@ -3,7 +3,7 @@ package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 public class HarnessStep {
 
 	public static final String TYPE_MESSAGE = "MESSAGE";
-	public static final String TYPE_TEST = "TEST";
+	public static final String TYPE_MEASUREMENT = "MEASUREMENT";
 	public static final String TYPE_STATE = "STATE";
 	
 	public static final String MESSAGE_COMPLETED = "Completed";
@@ -22,12 +22,12 @@ public class HarnessStep {
 		return l;
 	}
 	
-	public static HarnessStep newTest(String id, String message, Object actual) {
+	public static HarnessStep newMeasurement(String id, String message, Object actual) {
 		HarnessStep l = new HarnessStep();
 		l.id = id;
 		l.message = message;
 		l.actual = actual;
-		l.type = TYPE_TEST;
+		l.type = TYPE_MEASUREMENT;
 		return l;
 	}
 	

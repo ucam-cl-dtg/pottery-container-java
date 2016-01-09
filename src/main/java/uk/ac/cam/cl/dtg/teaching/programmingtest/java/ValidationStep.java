@@ -1,39 +1,44 @@
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 
 public class ValidationStep {
-
-	public static final String STATUS_PASS = Result.STATUS_PASS;
-	public static final String STATUS_WARNING = Result.STATUS_WARNING;
-	public static final String STATUS_FAIL = Result.STATUS_FAIL;
 	
-	private String status;
-	private String message;
-
-	public ValidationStep(String status, String message) {
-		this.status = status;
-		this.message = message;
+	private String criterion;
+	private String result;
+	private String[] references;
+	
+	public ValidationStep(String criterion, String result, String... references) {
+		this.criterion = criterion;
+		this.result = result;
+		this.references = references;
 	}
 	
 	public ValidationStep() {
 		
 	}
-	
-	public String getStatus() {
-		return status;
+
+	public String getCriterion() {
+		return criterion;
 	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public void setCriterion(String criterion) {
+		this.criterion = criterion;
 	}
 
-	public String getMessage() {
-		return message;
+	public String getResult() {
+		return result;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public void setResult(String result) {
+		this.result = result;
 	}
-	
+
+	public String[] getReferences() {
+		return references;
+	}
+
+	public void setReferences(String[] references) {
+		this.references = references;
+	}
 	
 	
 	

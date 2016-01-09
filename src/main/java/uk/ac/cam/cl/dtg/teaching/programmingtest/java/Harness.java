@@ -3,6 +3,10 @@ package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.hyperic.sigar.ProcCpu;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
+
 public abstract class Harness {
 
 	private List<HarnessStep> log = new LinkedList<HarnessStep>();
@@ -16,7 +20,7 @@ public abstract class Harness {
 	}
 	
 	protected final void test(String id, String message, Object actual) {
-		log.add(HarnessStep.newTest(id, message,actual));
+		log.add(HarnessStep.newMeasurement(id, message,actual));
 	}
 	
 	public List<HarnessStep> getLog() { return log; }
@@ -26,4 +30,36 @@ public abstract class Harness {
 	public void run() throws Throwable {
 		test(new Accessor(this));
 	}
+
+	private long totalCpu = 0;
+	public void startCompute() {
+		try {
+			Sigar sigar = new Sigar();
+			ProcCpu procCpu = sigar.getProcCpu(sigar.getPid());
+			totalCpu = procCpu.getTotal();
+		} catch (SigarException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void finishCompute(String tag) {
+		try {
+			Sigar sigar = new Sigar();
+			ProcCpu procCpu = sigar.getProcCpu(sigar.getPid());
+			log.add(HarnessStep.newMeasurement(tag,"CPU usage", procCpu.getTotal() - totalCpu));
+		} catch (SigarException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private long nanoTime = 0;
+	public void startTime() {
+		nanoTime = System.nanoTime();
+	}
+	
+	public void finishTime() {
+		log.add(HarnessStep.newState("runningtime",System.nanoTime()-nanoTime));
+	}
+	
+	
 }
