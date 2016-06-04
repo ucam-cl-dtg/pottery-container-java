@@ -7,6 +7,8 @@ import org.hyperic.sigar.ProcCpu;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
+import uk.ac.cam.cl.dtg.teaching.programmingtest.java.dto.HarnessStep;
+
 public abstract class Harness {
 
 	private List<HarnessStep> log = new LinkedList<HarnessStep>();
