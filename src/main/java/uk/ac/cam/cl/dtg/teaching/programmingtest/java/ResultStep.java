@@ -1,5 +1,7 @@
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 
+import uk.ac.cam.cl.dtg.teaching.programmingtest.java.dto.ValidationStep;
+
 public class ResultStep {
 
 	private ValidationStep validationStep;
