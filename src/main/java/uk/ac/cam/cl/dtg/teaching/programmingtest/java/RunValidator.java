@@ -1,20 +1,18 @@
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
-import uk.ac.cam.cl.dtg.teaching.programmingtest.java.dto.HarnessResponse;
-import uk.ac.cam.cl.dtg.teaching.programmingtest.java.dto.HarnessStep;
-import uk.ac.cam.cl.dtg.teaching.programmingtest.java.dto.ValidationResponse;
+import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.Interpretation;
+import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.Measurement;
+import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.ValidatorResponse;
 
 public class RunValidator {
 
@@ -23,82 +21,44 @@ public class RunValidator {
 		String validatorClass = args[0];
 		ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-		long startTime = System.currentTimeMillis();
+		List<Measurement> measurements;
+		try{
+			measurements = objectMapper.readValue(System.in, new TypeReference<List<Measurement>>() {});
+		}
+		catch (IOException e) {
+			System.out.println("Failed to read input: "+e.getMessage());
+			System.exit(-1);
+			return;
+		}
+
+		Map<String,Measurement> map = new HashMap<>();
+		for(Measurement m : measurements) {
+			map.put(m.getId(), m);
+		}
+		
+		ValidatorResponse v = new ValidatorResponse();
 		try {
-			HarnessResponse response;
-			try{
-				response = objectMapper.readValue(System.in, HarnessResponse.class);
+			for(TestCase t : TestCase.getTestCases(validatorClass)) {
+				t.interpret(map, v);
 			}
-			catch (IOException e) {
-				e.printStackTrace();
-				objectMapper.writeValue(System.out, new ValidationResponse(false,null,"Failed to read input: "+e.getMessage(),System.currentTimeMillis()-startTime));
-				return;
-			}
-				
-			List<HarnessStep> logItems = response.getResponse();
-			ValidationResponse result;
-			try {
-				result = validate(validatorClass,logItems, objectMapper,startTime);
-			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-				 objectMapper.writeValue(System.out, new ValidationResponse(false,null,"Failed to access harness class: "+e.getMessage(),System.currentTimeMillis()-startTime));
-				return;
-			}
-			
-			try {
-				System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
-//				System.out.println(objectMapper.writeValueAsString(result));
-			} catch (JsonParseException|JsonGenerationException|JsonMappingException e) {
-				objectMapper.writeValue(System.out, new ValidationResponse(false,null,"Failed to serialize output: "+e.getMessage(),System.currentTimeMillis()-startTime));
-			} catch (IOException e) {
-				objectMapper.writeValue(System.out, new ValidationResponse(false,null,"IOException: "+e.getMessage(),System.currentTimeMillis()-startTime));
-			}
+			v.setCompleted(true);
+		} catch (ClassNotFoundException e1) {
+			v.setMessage("Failed to load validator class: "+e1.getMessage());
+		}
+		
+		ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
+//		ObjectWriter writer = objectMapper.writer();
+
+		try {
+			System.out.println(writer.writeValueAsString(v));
 		} catch (IOException e) {
-			System.out.println(String.format("{failMessage:\"Failed to write error message to response: %s\",success:false,response:null}",e.getMessage()));
+			System.out.println(String.format("{completed:false,interpretation:\"%s\",measurements:[],missingIds:[],message:\"%s\"}",
+					Interpretation.INTERPRETED_BAD,
+					"Failed to serialize output: "+e.getMessage()));
+			System.exit(-1);
+			return;
 		}
-		finally {
-			System.out.println();
-		}
-
-	}
-	
-	public static ValidationResponse validate(String validatorClass, List<HarnessStep> logItems, ObjectMapper o, long startTime) throws JsonParseException, JsonMappingException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {		
-
-		Map<String,Object> measurements = new HashMap<String,Object>() {
-			private static final long serialVersionUID = 1L;
-			@Override
-			public Object get(Object key) {	
-				Object r = super.get(key);
-				if (r == null) throw new MissingHarnessStepError("Failed to find harness result for key: "+key.toString());
-				return r;
-			}
-			
-		};
-		
-		for(HarnessStep logItem : logItems) {
-			if (logItem.getType().equals(HarnessStep.TYPE_MEASUREMENT)) {
-				measurements.put(logItem.getId(),logItem.getActual());
-			}
-		}
-		
-		@SuppressWarnings("unchecked")
-		Class<? extends Validator> c = (Class<? extends Validator>)Class.forName(validatorClass);
-		Validator validator = c.newInstance();
-		
-		 
-		try {
-			return new ValidationResponse(
-					true,
-					validator.validate(Collections.unmodifiableMap(measurements)),
-					null,
-					System.currentTimeMillis()-startTime);			
-		}
-		catch (Throwable e) {
-			return new ValidationResponse(
-					false,
-					null,
-					e.getMessage(),
-					System.currentTimeMillis()-startTime);
-		}
+		System.exit(0);
 	}
 
 }
