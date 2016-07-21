@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.HarnessPart;
@@ -57,14 +58,14 @@ public abstract class TestCase {
 		return p;
 	}
 	
-	public void interpret(Map<String,Measurement> m, ValidatorResponse v) {
+	public void interpret(Map<String,Measurement> m, ValidatorResponse v, Set<String> missingIds) {
 		for (String id : getIds()) {
 			if (m.containsKey(id)) {
 				Interpretation i = interpret(m.get(id));
 				v.getInterpretations().add(i);
 			}
 			else {
-				v.getMissingIds().add(id);
+				missingIds.add(id);
 			}
 		}
 	}

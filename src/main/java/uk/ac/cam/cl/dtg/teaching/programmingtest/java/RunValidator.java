@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,12 +38,18 @@ public class RunValidator {
 			map.put(m.getId(), m);
 		}
 		
+		Set<String> missingIds = new TreeSet<String>();
 		ValidatorResponse v = new ValidatorResponse();
 		try {
 			for(TestCase t : TestCase.getTestCases(validatorClass)) {
-				t.interpret(map, v);
+				t.interpret(map, v,missingIds);
 			}
-			v.setCompleted(true);
+			if (!missingIds.isEmpty()) {
+				v.setMessage("Incomplete response from harness. Missing measurements: "+missingIds.stream().reduce("", (x,y)->x+","+y));
+			}
+			else {
+				v.setCompleted(true);
+			}
 		} catch (ClassNotFoundException e1) {
 			v.setMessage("Failed to load validator class: "+e1.getMessage());
 		}
