@@ -40,20 +40,23 @@ public abstract class TestCase {
 			test(accessor,p);
 		} catch (Throwable e) {
 			if (e instanceof RuntimeException) {
-				e = e.getCause();
-				if (e instanceof InvocationTargetException) {
-					e = ((InvocationTargetException)e).getTargetException();
+				if (e.getCause() != null) {
+					e = e.getCause();
 				}
-				p.setErrorSummary("An unexpected exception occurred: "+e.getClass().getName());
-				StringBuffer b = new StringBuffer();
-				b.append(String.format("<code>%s</code>: %s",e.getClass().getName(),e.getMessage()));
-				b.append("<ul>");
-				for(StackTraceElement el : e.getStackTrace()) {
-					b.append(String.format("<li>at <code>%s.%s(%s:%d)</code></li>",el.getClassName(),el.getMethodName(),el.getFileName(),el.getLineNumber()));
-				}
-				b.append("</ul>");
-				p.setErrorDetail(b.toString());
 			}
+			if (e instanceof InvocationTargetException) {
+				Throwable f = ((InvocationTargetException)e).getTargetException();
+				if (f != null) e = f;
+			}
+			p.setErrorSummary("An unexpected exception occurred: "+e.getClass().getName());
+			StringBuffer b = new StringBuffer();
+			b.append(String.format("<code>%s</code>: %s",e.getClass().getName(),e.getMessage()));
+			b.append("<ul>");
+			for(StackTraceElement el : e.getStackTrace()) {
+				b.append(String.format("<li>at <code>%s.%s(%s:%d)</code></li>",el.getClassName(),el.getMethodName(),el.getFileName(),el.getLineNumber()));
+			}
+			b.append("</ul>");
+			p.setErrorDetail(b.toString());
 		}
 		return p;
 	}
