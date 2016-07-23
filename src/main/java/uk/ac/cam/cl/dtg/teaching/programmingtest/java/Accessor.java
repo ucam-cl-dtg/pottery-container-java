@@ -57,16 +57,15 @@ public class Accessor {
 		}
 		throw new RuntimeException(new NoSuchFieldException("Field " + field + " not found in class " + c.getName()));
 	}
-
 	
-	public Object invoke(Object o, String methodName, Object... params) {
+	public <T> T invoke(Object o, String methodName, Object... params) {
 		try {
-			return methodInvoker(o, methodName, params);
+			return this.<T>methodInvoker(o, methodName, params);
 		} catch (InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
 	}
-
+	
 	public Object invokeMain(String className, String... params) {
 		if (params == null)	params = new String[] {};
 		return invoke(className, "main",new Object[] { params });
@@ -80,7 +79,6 @@ public class Accessor {
 			return e.getTargetException().getClass().getName();
 		}
 	}
-	
 	
 	private static boolean paramMatch(Class<?>[] paramTypes, Object[] params) {
 		if (paramTypes.length != params.length) return false;
@@ -123,7 +121,7 @@ public class Accessor {
 	}
 
 
-	private Object methodInvoker(Object o, String methodName,
+	private <T> T methodInvoker(Object o, String methodName,
 			Object... params) throws InvocationTargetException {
 		
 		Class<?> c;
@@ -145,7 +143,9 @@ public class Accessor {
 						throw new RuntimeException("Method "+m+" is not static");
 					}
 					try {
-						return m.invoke(o, params);
+						@SuppressWarnings("unchecked")
+						T res = (T)m.invoke(o, params);
+						return res;
 					} catch (IllegalAccessException|IllegalArgumentException e) {
 						throw new RuntimeException(e);
 					}
