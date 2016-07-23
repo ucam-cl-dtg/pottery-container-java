@@ -45,7 +45,7 @@ public class RunValidator {
 				t.interpret(map, v,missingIds);
 			}
 			if (!missingIds.isEmpty()) {
-				v.setMessage("Incomplete response from harness. Missing measurements: "+missingIds.stream().reduce("", (x,y)->x+","+y));
+				v.setMessage("Incomplete response from harness. Missing measurements: "+missingIds.stream().reduce((x,y)->x+","+y).get());
 			}
 			else {
 				v.setCompleted(true);
@@ -66,6 +66,8 @@ public class RunValidator {
 			System.exit(-1);
 			return;
 		}
+		System.out.println();
+		System.out.println();
 		System.exit(0);
 	}
 
