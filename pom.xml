@@ -2,21 +2,26 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>uk.ac.cam.cl.dtg.teaching</groupId>
-	<artifactId>programming-test-java</artifactId>
+	<artifactId>pottery-container-java</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0.0-SNAPSHOT</version>
-	<name>programming-test-java</name>
 
 	<properties>
 		<slf4j.version>1.7.5</slf4j.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+
+	<scm>
+          <developerConnection>scm:git:ssh://git@github.com/ucam-cl-dtg/pottery-container-java.git</developerConnection>
+          <tag>HEAD</tag>
+	</scm>
 
 	<dependencies>
 
 		<dependency>
 			<groupId>uk.ac.cam.cl.dtg.teaching</groupId>
 			<artifactId>pottery-container-interface</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
@@ -74,6 +79,32 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+			<plugin>
+                                <groupId>com.mycila</groupId>
+                                <artifactId>license-maven-plugin</artifactId>
+                                <version>3.0.rc1</version>
+                                <configuration>
+                                        <header>com/mycila/maven/plugin/license/templates/AGPL-3.txt</header>
+                                        <properties>
+                                                <owner>Andrew Rice</owner>
+                                                <email>acr31@cam.ac.uk</email>
+                                                <project.description>Within-container library for testing Java code</project.description>
+                                                <project.inceptionYear>2015</project.inceptionYear>
+                                        </properties>
+                                        <excludes>
+                                                <exclude>LICENSE</exclude>
+                                                <exclude>pom.xml</exclude>
+                                        </excludes>
+                                </configuration>
+                                <executions>
+                                        <execution>
+                                                <goals>
+                                                        <goal>check</goal>
+                                                </goals>
+                                        </execution>
+                                </executions>
+                        </plugin>
+			
 		</plugins>
 
 		<extensions>
