@@ -20,7 +20,6 @@ public class RunValidator {
 
 	public static void main(String[] args) {
 
-		String validatorClass = args[0];
 		ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		List<Measurement> measurements;
@@ -41,7 +40,7 @@ public class RunValidator {
 		Set<String> missingIds = new TreeSet<String>();
 		ValidatorResponse v = new ValidatorResponse();
 		try {
-			for(TestCase t : TestCase.getTestCases(validatorClass)) {
+			for(TestCase t : TestCase.getTestCases()) {
 				t.interpret(map, v,missingIds);
 			}
 			if (!missingIds.isEmpty()) {
@@ -50,8 +49,13 @@ public class RunValidator {
 			else {
 				v.setCompleted(true);
 			}
-		} catch (ClassNotFoundException e1) {
-			v.setMessage("Failed to load validator class: "+e1.getMessage());
+		} 
+		catch (IOException e1) {
+			System.out.println(String.format("{completed:false,interpretation:\"%s\",measurements:[],missingIds:[],message:\"%s\"}",
+					Interpretation.INTERPRETED_BAD,
+					"Failed to scan for classes: "+e1.getMessage()));
+			System.exit(-1);
+			return;
 		}
 		
 		ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();

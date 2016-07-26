@@ -21,7 +21,7 @@ public class RunHarness {
 			System.setOut(new PrintStream(new DiscardingOutputStream()));
 			System.setErr(new PrintStream(new DiscardingOutputStream()));
 			// needs to be an uncloseable stream because ObjectWriter.writeValue seems to call close ;-( 
-			exitCode = run(args[0],stdout);
+			exitCode = run(stdout);
 		}
 		finally {
 			System.setOut(stdout);
@@ -30,17 +30,17 @@ public class RunHarness {
 		System.exit(exitCode);
 	}
 	
-	public static int run(String className, PrintStream out) {
+	public static int run(PrintStream out) {
 		ObjectMapper o = new ObjectMapper();
 		o.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 		ObjectWriter writer = o.writerWithDefaultPrettyPrinter();
-//		ObjectWriter writer = o.writer();
+		//		ObjectWriter writer = o.writer();
 		int exitCode = -1;
 		try {
 			try {
 				HarnessResponse h = new HarnessResponse();
 				Accessor a = new Accessor();
-				for(TestCase t : TestCase.getTestCases(className)) {
+				for(TestCase t : TestCase.getTestCases()) {
 					h.addHarnessPart(t.execute(a));
 				}
 				h.setCompleted(true);	
@@ -48,8 +48,6 @@ public class RunHarness {
 				exitCode = 0;
 			} catch (JsonGenerationException|JsonMappingException e) {
 				writer.writeValue(out, new HarnessResponse("Failed to serialize output: "+e.getMessage()));
-			} catch (ClassNotFoundException e) {
-				writer.writeValue(out, new HarnessResponse("Failed to load harness class: "+e.getMessage()));
 			} catch (IOException e) {
 				writer.writeValue(out, new HarnessResponse("IOException: "+e.getMessage()));
 			}
@@ -60,5 +58,4 @@ public class RunHarness {
 		out.println();
 		return exitCode;
 	}
-
 }

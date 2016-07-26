@@ -1,12 +1,15 @@
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.common.reflect.ClassPath;
 
 import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.HarnessPart;
 import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.Interpretation;
@@ -74,19 +77,28 @@ public abstract class TestCase {
 	}
 	
 
-	public static List<TestCase> getTestCases(String className) throws ClassNotFoundException {
-		Class<?> testClass = Class.forName(className);		
-		return Arrays.asList(testClass.getFields()).stream()
-		.map(f -> {
-			if (TestCase.class.isAssignableFrom(f.getType())) {
-				try {				
-					return Optional.of((TestCase)f.get(null));
-				} catch (IllegalArgumentException|IllegalAccessException e) {}
+	public static List<TestCase> getTestCases() throws IOException {
+		return ClassPath.from(TestCase.class.getClassLoader()).getTopLevelClasses()
+		.stream()
+		.map(i-> {
+			try {
+				return i.load();
+			} catch (NoClassDefFoundError e1) {
+				return null;
 			}
-			return Optional.<TestCase>empty();
 		})
-		.filter(t -> t.isPresent())
-		.map(t -> t.get())
-		.collect(Collectors.toList());
+		.filter(c -> c != null && c.getAnnotation(JavaTest.class) != null)
+		.map(c -> Arrays.asList(c.getFields()).stream()
+				.map(f -> {
+					if (TestCase.class.isAssignableFrom(f.getType())) {
+						try {				
+							return (TestCase)f.get(null);
+						} catch (IllegalArgumentException|IllegalAccessException e) {}
+					}
+					return null;
+				})
+				.filter(t -> t != null)
+				.collect(Collectors.toList()))
+		.collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
 	}
 }
