@@ -24,7 +24,7 @@ import org.objectweb.asm.Opcodes;
 public class InstructionCounterMethodAdapter extends MethodVisitor {
 
 
-	public static final boolean COUNT_BY_OPCODE = true;
+	private static final String INSTRUCTION_COUNTER_CLASSNAME = "uk/ac/cam/cl/dtg/teaching/programmingtest/java/bytecode/InstructionCounter";
 	
 	//http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-6.html
 	private static final int INCREMENT_INSTRUCTION = 0;
@@ -38,8 +38,8 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 
 	@Override
 	public void visitIincInsn(int var, int increment) {
-		mv.visitIincInsn(var, increment);
 		increment(INCREMENT_INSTRUCTION,Opcodes.IINC);
+		mv.visitIincInsn(var, increment);
 	}
 	
 	
@@ -54,7 +54,6 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	 */
 	@Override
 	public void visitInsn(int opcode) {
-		mv.visitInsn(opcode);
 		switch (opcode) {
 		case Opcodes.ICONST_0:
 		case Opcodes.ICONST_1:
@@ -81,11 +80,14 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 		case Opcodes.LRETURN:
 		case Opcodes.FRETURN:
 		case Opcodes.DRETURN:
+		case Opcodes.ARETURN:
+			increment(INCREMENT_INSTRUCTION,opcode);
 			// don't count these.  They are just loading a constant on the stack so we can just count the operation that uses the constant
 			break;
 		default:
 			increment(INCREMENT_INSTRUCTION,opcode);
 		}
+		mv.visitInsn(opcode);
 	}
 
 	/**
@@ -102,8 +104,7 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 		case Opcodes.SIPUSH:
 			// don't count these.  They are just loading a constant on the stack so we can just count the operation that uses the constant
 			break;
-		default:
-			
+		default:	
 			increment(INCREMENT_INSTRUCTION,opcode);
 		}
 	}
@@ -115,8 +116,8 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	 */
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
-		mv.visitJumpInsn(opcode, label);
 		increment(INCREMENT_INSTRUCTION,opcode);
+		mv.visitJumpInsn(opcode, label);
 	}
 		
 	/**
@@ -142,10 +143,10 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	 */
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
-		mv.visitTypeInsn(opcode, type);
 		if (opcode == Opcodes.NEW) {
 			waitForInit = true;
 		}
+		mv.visitTypeInsn(opcode, type);
 	}
 	
 	/**
@@ -154,8 +155,8 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	@Override
 	public void visitTableSwitchInsn(int min, int max, Label dflt,
 			Label... labels) {
-		mv.visitTableSwitchInsn(min, max, dflt, labels);
 		increment(INCREMENT_INSTRUCTION,Opcodes.TABLESWITCH);
+		mv.visitTableSwitchInsn(min, max, dflt, labels);
 	}
 
 	/**
@@ -163,8 +164,8 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	 */	
 	@Override
 	public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
-		mv.visitLookupSwitchInsn(dflt, keys, labels);
 		increment(INCREMENT_INSTRUCTION,Opcodes.LOOKUPSWITCH);
+		mv.visitLookupSwitchInsn(dflt, keys, labels);
 	}
 
 	/**
@@ -172,8 +173,8 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	 */
 	@Override
 	public void visitMultiANewArrayInsn(String desc, int dims) {
-		mv.visitMultiANewArrayInsn(desc, dims);
 		increment(INCREMENT_ALLOCATION,Opcodes.MULTIANEWARRAY);
+		mv.visitMultiANewArrayInsn(desc, dims);
 	}
 	
 	private void increment(int type,int opcode) {
@@ -181,25 +182,11 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 		case INCREMENT_ALLOCATION:
 			count+=2;
 			mv.visitInsn(Opcodes.DUP);
-			mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
-					"uk/ac/cam/cl/dtg/teaching/counter/Counter", "incrementAllocations", "(Ljava/lang/Object;)V",
-					false);
+			mv.visitMethodInsn(Opcodes.INVOKESTATIC,INSTRUCTION_COUNTER_CLASSNAME, "incrementAllocations", "(Ljava/lang/Object;)V",	false);
 			break;
 		default: // case INCREMENT_INSTRUCTION:
 			count++;
-			mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
-					"uk/ac/cam/cl/dtg/teaching/counter/Counter", "incrementInstructions", "()V",
-					false);
-		}
-		
-		if (COUNT_BY_OPCODE) {
-			count+=2;
-			mv.visitIntInsn(Opcodes.SIPUSH,opcode);
-			mv.visitMethodInsn(Opcodes.INVOKESTATIC, 
-					"uk/ac/cam/cl/dtg/teaching/counter/Counter", "incrementInstructionsByOpcode", "(I)V",
-					false);
-		} else {
-			
+			mv.visitMethodInsn(Opcodes.INVOKESTATIC,INSTRUCTION_COUNTER_CLASSNAME, "incrementInstructions", "()V",false);
 		}
 	}
 	

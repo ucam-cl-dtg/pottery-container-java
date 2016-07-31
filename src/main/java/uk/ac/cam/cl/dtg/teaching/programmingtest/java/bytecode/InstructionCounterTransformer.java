@@ -17,8 +17,6 @@
  */
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java.bytecode;
 
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
@@ -28,16 +26,18 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 public class InstructionCounterTransformer implements ClassFileTransformer {
-	
+
+	public static boolean ENABLE_INSTRUCTION_COUNTING = false;
+
 	private static final String[] blacklist = {
-			"java.lang",
+			"java.",
 			"sun.",
 			"org.objectweb.asm",
-			"uk.ac.cam.cl.dtg.teaching.counter",
-			"java.util"
+			"uk.ac.cam.cl.dtg.teaching.programmingtest.java",
+			"com.sun.",
+			"jdk.internal.",			
 	};
 
 	private static final String[] allowedUnsafe = {
@@ -66,8 +66,10 @@ public class InstructionCounterTransformer implements ClassFileTransformer {
 		
 		String dottedName = className.replaceAll("/",".");
 		
-		if (!isTransformable(dottedName) && !className.equals("CounterTest")) return classfileBuffer;
-
+		if (!isTransformable(dottedName)) {
+			return classfileBuffer;
+		}
+		
 		ClassWriter classWriter = new ClassWriter(0);
 		ClassReader classReader = new ClassReader(classfileBuffer);
 		ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5,classWriter) {
@@ -82,15 +84,13 @@ public class InstructionCounterTransformer implements ClassFileTransformer {
 				}
 			}
 		};
-		if (dottedName.equals("CounterTest1")) {
-			classVisitor = new TraceClassVisitor(classVisitor, new PrintWriter(new OutputStreamWriter(System.out)));
-		}
 		try {	
 			classReader.accept(classVisitor, 0);
 			byte[] result = classWriter.toByteArray();
-			ClassReader r = new ClassReader(result);
-			ClassVisitor v = new TraceClassVisitor(new PrintWriter(new OutputStreamWriter(System.out)));
-			r.accept(v, 0);
+//            ClassReader r = new ClassReader(result);
+//			ClassVisitor v = new TraceClassVisitor(new PrintWriter(new OutputStreamWriter(System.out)));
+//            r.accept(v, 0);
+
 			return result;
 		}
 		catch (InstrumentationUnsafeError e) {

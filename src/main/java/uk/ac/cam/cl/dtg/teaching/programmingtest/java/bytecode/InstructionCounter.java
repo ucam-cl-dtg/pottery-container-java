@@ -17,36 +17,26 @@
  */
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java.bytecode;
 
-import java.lang.instrument.Instrumentation;
-import java.lang.instrument.UnmodifiableClassException;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class Premain {
+public class InstructionCounter {
 
-	static Instrumentation instrumentation;
+	private static AtomicLong instructions = new AtomicLong(0);
+	private static AtomicLong allocations = new AtomicLong(0);
 	
-	public static void premain(String agentArgs, Instrumentation inst) {
-		Premain.instrumentation = inst;
-		
-		boolean transforming = false;
-		
-		if (InstructionCounterTransformer.ENABLE_INSTRUCTION_COUNTING) {
-			inst.addTransformer(new InstructionCounterTransformer());
-			transforming = true;
-		}
-
-		if (MethodParameterTransformer.TRACKING_REQUESTS.size() != 0) {
-			inst.addTransformer(new MethodParameterTransformer());
-			transforming = true;
-		}
-		
-		
-		if (transforming) {
-			for(Class<?> c : inst.getAllLoadedClasses()) {
-				try{
-					inst.retransformClasses(c);
-				} catch (UnmodifiableClassException e) {}	
-			}
-		}
+	public static void incrementInstructions() {
+		instructions.incrementAndGet();
+	}
+	
+	public static long getTotalInstructions() {
+		return instructions.get();
+	}
+	
+	public static void incrementAllocations(Object allocated) {
+		allocations.addAndGet(Premain.instrumentation.getObjectSize(allocated));
+	}
+	
+	public static long getTotalAllocations() {
+		return allocations.get();
 	}
 }
-	
