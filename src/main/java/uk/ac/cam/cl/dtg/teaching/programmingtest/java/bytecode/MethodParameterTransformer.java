@@ -15,15 +15,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
+package uk.ac.cam.cl.dtg.teaching.programmingtest.java.bytecode;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -34,10 +35,15 @@ import org.objectweb.asm.Type;
 
 public class MethodParameterTransformer implements ClassFileTransformer {
 
+	public static List<MethodCallTrackingRequest> TRACKING_REQUESTS = new LinkedList<>();
+	
 	private class TrackMethodVisitor extends MethodVisitor {
 
-		public TrackMethodVisitor(MethodVisitor mv)  {
+		private Method method;
+
+		public TrackMethodVisitor(MethodVisitor mv,Method method)  {
 			super(Opcodes.ASM5,mv);
+			this.method = method;
 		}		
 
 		@Override
@@ -53,20 +59,26 @@ public class MethodParameterTransformer implements ClassFileTransformer {
 		};
 	}
 
-	private Method method;
-	private String instrumentClass;
-	private String instrumentMethod;
+	private Map<String,Map<String,Method>> toTrack;
 	
-	public MethodParameterTransformer(String instrumentClass, String instrumentMethod, Method m) {
-		this.instrumentClass = instrumentClass;
-		this.instrumentMethod = instrumentMethod;
-		this.method = m;
+	public MethodParameterTransformer() {
+		toTrack = new HashMap<String,Map<String,Method>>();
+		for(MethodCallTrackingRequest m : TRACKING_REQUESTS) {
+			Map<String,Method> classMap = toTrack.get(m.getClassToInstrument());
+			if (classMap == null) {
+				classMap = new HashMap<String,Method>();
+				toTrack.put(m.getClassToInstrument(), classMap);
+			}
+			classMap.put(m.getMethodToInstrument(),m.getTrackerMethod());
+		}
 	}
 	
 	@Override
 	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-		if (className.replaceAll("/", ".").equals(instrumentClass)) {
+		
+		Map<String,Method> classMap = toTrack.get(className.replaceAll("/", "."));		
+		if (classMap != null) {
 			ClassWriter classWriter = new ClassWriter(Opcodes.ASM5);
 			ClassReader classReader = new ClassReader(classfileBuffer);
 			ClassVisitor classVisitor = new ClassVisitor(Opcodes.ASM5,classWriter) {
@@ -74,22 +86,16 @@ public class MethodParameterTransformer implements ClassFileTransformer {
 				public MethodVisitor visitMethod(int access, String name, String desc,
 						String signature, String[] exceptions) {
 					MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
-					if (!name.equals(instrumentMethod)) return mv;
+					Method method = classMap.get(name);
+					if (method == null) return mv;
 					if (mv != null) {
-						return new TrackMethodVisitor(mv);
+						return new TrackMethodVisitor(mv,method);
 					}
 					return null;
 				}
 			};
 			classReader.accept(classVisitor, 0);
 			byte[] result = classWriter.toByteArray();
-			try {
-				try(FileOutputStream fos = new FileOutputStream("/tmp/out.class")) {
-					fos.write(result);
-				}
-			} catch (FileNotFoundException e) {throw new Error(e);
-			} catch (IOException e) { throw new Error(e);
-			}
 			return result;
 		}
 		return classfileBuffer;
