@@ -54,39 +54,7 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 	 */
 	@Override
 	public void visitInsn(int opcode) {
-		switch (opcode) {
-		case Opcodes.ICONST_0:
-		case Opcodes.ICONST_1:
-		case Opcodes.ICONST_2:
-		case Opcodes.ICONST_3:
-		case Opcodes.ICONST_4:
-		case Opcodes.ICONST_5:
-		case Opcodes.FCONST_0:
-		case Opcodes.FCONST_1:
-		case Opcodes.FCONST_2:
-		case Opcodes.DCONST_0:
-		case Opcodes.DCONST_1:
-		case Opcodes.LCONST_0:
-		case Opcodes.LCONST_1:
-		case Opcodes.DUP:
-		case Opcodes.DUP_X1:
-		case Opcodes.DUP_X2:
-		case Opcodes.DUP2:
-		case Opcodes.DUP2_X1:
-		case Opcodes.DUP2_X2:
-		case Opcodes.ARRAYLENGTH:
-		case Opcodes.RETURN:
-		case Opcodes.IRETURN:
-		case Opcodes.LRETURN:
-		case Opcodes.FRETURN:
-		case Opcodes.DRETURN:
-		case Opcodes.ARETURN:
-			increment(INCREMENT_INSTRUCTION,opcode);
-			// don't count these.  They are just loading a constant on the stack so we can just count the operation that uses the constant
-			break;
-		default:
-			increment(INCREMENT_INSTRUCTION,opcode);
-		}
+		increment(INCREMENT_INSTRUCTION,opcode);
 		mv.visitInsn(opcode);
 	}
 
@@ -99,10 +67,6 @@ public class InstructionCounterMethodAdapter extends MethodVisitor {
 		switch (opcode) {
 		case Opcodes.NEWARRAY:	
 			increment(INCREMENT_ALLOCATION,opcode);
-			break;
-		case Opcodes.BIPUSH:
-		case Opcodes.SIPUSH:
-			// don't count these.  They are just loading a constant on the stack so we can just count the operation that uses the constant
 			break;
 		default:	
 			increment(INCREMENT_INSTRUCTION,opcode);
