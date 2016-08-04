@@ -57,16 +57,26 @@ public class Accessor {
 				.reduce("",(x,y)->x+","+y);
 		throw new RuntimeException(new NoSuchMethodException(String.format("Constructor %s(%s) not found",className,argList)));
 	}
-
-	public Object getField(Object instance, String field) {
-		Class<?> c = instance.getClass();
+	
+	public <T> T getField(Object instance, String field) {
+		Class<?> c = null;
+		if (instance instanceof String) {
+			c = loadClass((String)instance);
+			instance = null;
+		}
+		else {
+			c = instance.getClass();
+		}
+			
 		Set<Field> fields = new HashSet<Field>();
 		addFieldList(c, fields);
 		for (Field f : fields) {
 			if (f.getName().equals(field)) {
 				f.setAccessible(true);
 				try {
-					return f.get(instance);
+					@SuppressWarnings("unchecked")
+					T r = (T)f.get(instance);
+					return r;
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					throw new RuntimeException(e);
 				}
