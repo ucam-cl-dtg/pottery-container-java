@@ -69,7 +69,7 @@ public class RunValidator {
 		} 
 		catch (IOException e1) {
 			System.out.println(String.format("{completed:false,interpretation:\"%s\",measurements:[],missingIds:[],message:\"%s\"}",
-					Interpretation.INTERPRETED_BAD,
+					Interpretation.INTERPRETED_FAILED,
 					"Failed to scan for classes: "+e1.getMessage()));
 			System.exit(-1);
 			return;
@@ -82,7 +82,7 @@ public class RunValidator {
 			System.out.println(writer.writeValueAsString(v));
 		} catch (IOException e) {
 			System.out.println(String.format("{completed:false,interpretation:\"%s\",measurements:[],missingIds:[],message:\"%s\"}",
-					Interpretation.INTERPRETED_BAD,
+					Interpretation.INTERPRETED_FAILED,
 					"Failed to serialize output: "+e.getMessage()));
 			System.exit(-1);
 			return;
