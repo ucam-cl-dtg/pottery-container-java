@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -35,11 +36,13 @@ public class RunValidator {
   /** Entry point for the validator. */
   public static void main(String[] args) {
 
+    String jsonInputFile = args[0];
+
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
     List<Measurement> measurements;
-    try {
-      measurements = objectMapper.readValue(System.in, new TypeReference<List<Measurement>>() {});
+    try (FileInputStream fis = new FileInputStream(jsonInputFile)) {
+      measurements = objectMapper.readValue(fis, new TypeReference<List<Measurement>>() {});
     } catch (IOException e) {
       System.out.println("Failed to read input: " + e.getMessage());
       System.exit(-1);
