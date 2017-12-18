@@ -1,4 +1,4 @@
-/**
+/*
  * pottery-container-java - Within-container library for testing Java code Copyright © 2015 Andrew
  * Rice (acr31@cam.ac.uk)
  *
@@ -69,7 +69,6 @@ public abstract class FittedCurve implements Comparable<FittedCurve> {
       s.addValue(r);
     }
     rsq = s.getMean();
-    //		System.out.println(rsq);
   }
 
   public double fit(List<Point> mapped, double proportion) {

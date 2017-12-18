@@ -1,4 +1,4 @@
-/**
+/*
  * pottery-container-java - Within-container library for testing Java code Copyright © 2015 Andrew
  * Rice (acr31@cam.ac.uk)
  *

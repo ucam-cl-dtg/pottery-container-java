@@ -1,4 +1,4 @@
-/**
+/*
  * pottery-container-java - Within-container library for testing Java code Copyright © 2015 Andrew
  * Rice (acr31@cam.ac.uk)
  *
@@ -13,6 +13,7 @@
  * <p>You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -26,6 +27,9 @@ import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.HarnessRespo
 
 public class RunHarness {
 
+  /**
+   * Execute the candidate's code using the test harness and print the results to standard out.
+   */
   public static void main(String[] args) {
     PrintStream stdout = System.out;
     PrintStream stderr = System.err;
@@ -42,11 +46,10 @@ public class RunHarness {
     System.exit(exitCode);
   }
 
-  public static int run(PrintStream out) {
+  private static int run(PrintStream out) {
     ObjectMapper o = new ObjectMapper();
     o.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
     ObjectWriter writer = o.writerWithDefaultPrettyPrinter();
-    //		ObjectWriter writer = o.writer();
     int exitCode = -1;
     try {
       try {
@@ -67,7 +70,9 @@ public class RunHarness {
     } catch (IOException e) {
       out.println(
           String.format(
-              "{message:\"Unexpected error when writing response: %s\"],completed:false,testParts:[]}",
+              "{message:\"Unexpected error when writing response: %s\"]," //
+                  + "completed:false,"
+                  + "testParts:[]}",
               e.getMessage()));
     }
     out.println();
