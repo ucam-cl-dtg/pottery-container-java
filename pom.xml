@@ -97,6 +97,9 @@
                         <project.description>Within-container library for testing Java code</project.description>
                         <project.inceptionYear>2015</project.inceptionYear>
                     </properties>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
                     <excludes>
                         <exclude>LICENSE</exclude>
                         <exclude>pom.xml</exclude>
