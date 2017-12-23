@@ -1,22 +1,24 @@
-/**
- * pottery-container-java - Within-container library for testing Java code Copyright © 2015 Andrew
- * Rice (acr31@cam.ac.uk)
+/*
+ * pottery-container-java - Within-container library for testing Java code
+ * Copyright © 2015 Andrew Rice (acr31@cam.ac.uk)
  *
- * <p>This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU Affero General Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  *
- * <p>You should have received a copy of the GNU Affero General Public License along with this
- * program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java.bytecode;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
@@ -38,7 +40,7 @@ public class MethodParameterTransformer implements ClassFileTransformer {
 
     private Method method;
 
-    public TrackMethodVisitor(MethodVisitor mv, Method method) {
+    TrackMethodVisitor(MethodVisitor mv, Method method) {
       super(Opcodes.ASM5, mv);
       this.method = method;
     }
@@ -55,20 +57,17 @@ public class MethodParameterTransformer implements ClassFileTransformer {
           false);
       mv.visitVarInsn(Opcodes.ASTORE, 0);
       mv.visitCode();
-    };
+    }
   }
 
   private Map<String, Map<String, Method>> toTrack;
 
-  public MethodParameterTransformer() {
-    toTrack = new HashMap<String, Map<String, Method>>();
+  MethodParameterTransformer() {
+    toTrack = new HashMap<>();
     for (MethodCallTrackingRequest m : TRACKING_REQUESTS) {
-      Map<String, Method> classMap = toTrack.get(m.getClassToInstrument());
-      if (classMap == null) {
-        classMap = new HashMap<String, Method>();
-        toTrack.put(m.getClassToInstrument(), classMap);
-      }
-      classMap.put(m.getMethodToInstrument(), m.getTrackerMethod());
+      toTrack
+          .computeIfAbsent(m.getClassToInstrument(), f -> new HashMap<>())
+          .put(m.getMethodToInstrument(), m.getTrackerMethod());
     }
   }
 
@@ -78,10 +77,9 @@ public class MethodParameterTransformer implements ClassFileTransformer {
       String className,
       Class<?> classBeingRedefined,
       ProtectionDomain protectionDomain,
-      byte[] classfileBuffer)
-      throws IllegalClassFormatException {
+      byte[] classfileBuffer) {
 
-    Map<String, Method> classMap = toTrack.get(className.replaceAll("/", "."));
+    Map<String, Method> classMap = toTrack.get(className.replace("/", "."));
     if (classMap != null) {
       ClassWriter classWriter = new ClassWriter(Opcodes.ASM5);
       ClassReader classReader = new ClassReader(classfileBuffer);
@@ -92,7 +90,9 @@ public class MethodParameterTransformer implements ClassFileTransformer {
                 int access, String name, String desc, String signature, String[] exceptions) {
               MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
               Method method = classMap.get(name);
-              if (method == null) return mv;
+              if (method == null) {
+                return mv;
+              }
               if (mv != null) {
                 return new TrackMethodVisitor(mv, method);
               }
@@ -100,8 +100,7 @@ public class MethodParameterTransformer implements ClassFileTransformer {
             }
           };
       classReader.accept(classVisitor, 0);
-      byte[] result = classWriter.toByteArray();
-      return result;
+      return classWriter.toByteArray();
     }
     return classfileBuffer;
   }

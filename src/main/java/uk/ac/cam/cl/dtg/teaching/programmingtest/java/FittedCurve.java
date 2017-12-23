@@ -1,17 +1,19 @@
 /*
- * pottery-container-java - Within-container library for testing Java code Copyright © 2015 Andrew
- * Rice (acr31@cam.ac.uk)
+ * pottery-container-java - Within-container library for testing Java code
+ * Copyright © 2015 Andrew Rice (acr31@cam.ac.uk)
  *
- * <p>This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU Affero General Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  *
- * <p>You should have received a copy of the GNU Affero General Public License along with this
- * program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
@@ -28,19 +30,21 @@ import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 
 public abstract class FittedCurve implements Comparable<FittedCurve> {
 
+  private static final boolean DEBUG = false;
+
   protected static class Point {
-    double y;
-    double[] xCoeff;
+    double yvalue;
+    double[] xcoeff;
   }
 
   private double rsq;
-  private double[] x;
-  private double[] y;
+  private double[] xs;
+  private double[] ys;
 
-  public FittedCurve(double[] x, double[] y) {
+  FittedCurve(double[] xs, double[] ys) {
     super();
-    this.x = x;
-    this.y = y;
+    this.xs = xs;
+    this.ys = ys;
   }
 
   protected abstract List<Point> mapValues(double[] x, double[] y);
@@ -60,9 +64,11 @@ public abstract class FittedCurve implements Comparable<FittedCurve> {
     }
   }
 
+  /**
+   * Attempt to fit this curve.
+   */
   public void fit() {
-
-    List<Point> mapped = mapValues(x, y);
+    List<Point> mapped = mapValues(xs, ys);
     DescriptiveStatistics s = new DescriptiveStatistics();
     for (int i = 0; i < 20; ++i) {
       double r = fit(mapped, 0.5);
@@ -71,7 +77,7 @@ public abstract class FittedCurve implements Comparable<FittedCurve> {
     rsq = s.getMean();
   }
 
-  public double fit(List<Point> mapped, double proportion) {
+  private double fit(List<Point> mapped, double proportion) {
     Collections.shuffle(mapped);
     int total = (int) (mapped.size() * proportion);
     double[][] x = new double[total][];
@@ -79,8 +85,8 @@ public abstract class FittedCurve implements Comparable<FittedCurve> {
     Iterator<Point> step = mapped.iterator();
     for (int i = 0; i < total; ++i) {
       Point next = step.next();
-      x[i] = next.xCoeff;
-      y[i] = next.y;
+      x[i] = next.xcoeff;
+      y[i] = next.yvalue;
     }
 
     OLSMultipleLinearRegression ols = new OLSMultipleLinearRegression();
@@ -89,19 +95,19 @@ public abstract class FittedCurve implements Comparable<FittedCurve> {
     RealMatrix coef = MatrixUtils.createColumnRealMatrix(ols.estimateRegressionParameters());
     double rsqTotal = 0.0;
     for (Point p : mapped) {
-      double yhat = coef.preMultiply(p.xCoeff)[0];
-      rsqTotal += unmapY(Math.pow(p.y - yhat, 2.0));
+      double yhat = coef.preMultiply(p.xcoeff)[0];
+      rsqTotal += unmapY(Math.pow(p.yvalue - yhat, 2.0));
     }
 
     if (DEBUG) {
-      List<Point> newMaps = mapValues(this.x, this.y);
+      List<Point> newMaps = mapValues(this.xs, this.ys);
       LinkedList<Double> xs = new LinkedList<>();
       LinkedList<Double> ys = new LinkedList<>();
       int i = 0;
       for (Point p : newMaps) {
-        double yhat = unmapY(coef.preMultiply(p.xCoeff)[0]);
+        double yhat = unmapY(coef.preMultiply(p.xcoeff)[0]);
         ys.addLast(yhat);
-        xs.addLast(this.x[i++]);
+        xs.addLast(this.xs[i++]);
       }
       System.out.println("x=[" + Joiner.on(",").join(xs) + "]");
       System.out.println("y=[" + Joiner.on(",").join(ys) + "]");
@@ -109,5 +115,4 @@ public abstract class FittedCurve implements Comparable<FittedCurve> {
     return rsqTotal;
   }
 
-  public static final boolean DEBUG = false;
 }

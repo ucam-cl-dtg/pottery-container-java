@@ -1,17 +1,19 @@
 /*
- * pottery-container-java - Within-container library for testing Java code Copyright © 2015 Andrew
- * Rice (acr31@cam.ac.uk)
+ * pottery-container-java - Within-container library for testing Java code
+ * Copyright © 2015 Andrew Rice (acr31@cam.ac.uk)
  *
- * <p>This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU Affero General Public License as published by the Free Software Foundation, either version 3
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  *
- * <p>You should have received a copy of the GNU Affero General Public License along with this
- * program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.HarnessPart;
@@ -30,27 +33,21 @@ import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.Interpretati
 import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.Measurement;
 import uk.ac.cam.cl.dtg.teaching.programmingtest.containerinterface.ValidatorResponse;
 
+/** Abstract superclass for defining tests. */
 public abstract class TestCase {
 
-  /** @return the unique ids given to the measurements in this test */
+  /** Return the unique ids given to the measurements in this test. */
   protected abstract String[] getIds();
 
   /**
-   * Run the test, returning a HarnessPart with summary, steps and measurements
+   * Run the test, returning a HarnessPart with summary, steps and measurements.
    *
    * @param accessor dynamic loader for the candidates code
-   * @param HarnessPart object with details of the test (add to this)
+   * @param p contains details of the test
    */
   protected abstract void test(Accessor accessor, HarnessPart p);
 
-  /**
-   * Inspect the measurement and return an interpretation
-   *
-   * @param m the measurement
-   * @return the interpretation of the measurement
-   */
-  protected abstract Interpretation interpret(Measurement m);
-
+  /** Executes this test step and returns the outcome. */
   public HarnessPart execute(Accessor accessor) {
     HarnessPart p = new HarnessPart();
     try {
@@ -81,6 +78,15 @@ public abstract class TestCase {
     return p;
   }
 
+  /**
+   * Inspect the measurement and return an interpretation.
+   *
+   * @param m the measurement
+   * @return the interpretation of the measurement
+   */
+  protected abstract Interpretation interpret(Measurement m);
+
+  /** Interpret the measurements, adding the results to the given ValidatorResponse. */
   public void interpret(Map<String, Measurement> m, ValidatorResponse v, Set<String> missingIds) {
     for (String id : getIds()) {
       if (m.containsKey(id)) {
@@ -92,6 +98,10 @@ public abstract class TestCase {
     }
   }
 
+  /**
+   * Return a list of test cases defined in this classloader by scanning for classes annotated with
+   * TestCase.
+   */
   public static List<TestCase> getTestCases() throws IOException {
     return ClassPath.from(TestCase.class.getClassLoader())
         .getTopLevelClasses()
@@ -107,19 +117,19 @@ public abstract class TestCase {
         .filter(c -> c != null && c.getAnnotation(JavaTest.class) != null)
         .map(
             c ->
-                Arrays.asList(c.getFields())
-                    .stream()
+                Arrays.stream(c.getFields())
                     .map(
                         f -> {
                           if (TestCase.class.isAssignableFrom(f.getType())) {
                             try {
                               return (TestCase) f.get(null);
                             } catch (IllegalArgumentException | IllegalAccessException e) {
+                              // ignore
                             }
                           }
                           return null;
                         })
-                    .filter(t -> t != null)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList()))
         .collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
   }

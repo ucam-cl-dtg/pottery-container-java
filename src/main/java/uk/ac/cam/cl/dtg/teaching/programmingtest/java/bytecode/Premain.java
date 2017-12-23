@@ -1,4 +1,4 @@
-/**
+/*
  * pottery-container-java - Within-container library for testing Java code
  * Copyright © 2015 Andrew Rice (acr31@cam.ac.uk)
  *
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package uk.ac.cam.cl.dtg.teaching.programmingtest.java.bytecode;
 
 import java.lang.instrument.Instrumentation;
@@ -22,31 +23,35 @@ import java.lang.instrument.UnmodifiableClassException;
 
 public class Premain {
 
-	static Instrumentation instrumentation;
-	
-	public static void premain(String agentArgs, Instrumentation inst) {
-		Premain.instrumentation = inst;
-		
-		boolean transforming = false;
-		
-		if (InstructionCounterTransformer.ENABLE_INSTRUCTION_COUNTING) {
-			inst.addTransformer(new InstructionCounterTransformer());
-			transforming = true;
-		}
+  static Instrumentation instrumentation;
 
-		if (MethodParameterTransformer.TRACKING_REQUESTS.size() != 0) {
-			inst.addTransformer(new MethodParameterTransformer());
-			transforming = true;
-		}
-		
-		
-		if (transforming) {
-			for(Class<?> c : inst.getAllLoadedClasses()) {
-				try{
-					inst.retransformClasses(c);
-				} catch (UnmodifiableClassException e) {}	
-			}
-		}
-	}
+  /**
+   * Check which kinds of instrumentation we are supposed to perform and begin transforming classes
+   * if needed.
+   */
+  public static void premain(String agentArgs, Instrumentation inst) {
+    Premain.instrumentation = inst;
+
+    boolean transforming = false;
+
+    if (InstructionCounterTransformer.ENABLE_INSTRUCTION_COUNTING) {
+      inst.addTransformer(new InstructionCounterTransformer());
+      transforming = true;
+    }
+
+    if (MethodParameterTransformer.TRACKING_REQUESTS.size() != 0) {
+      inst.addTransformer(new MethodParameterTransformer());
+      transforming = true;
+    }
+
+    if (transforming) {
+      for (Class<?> c : inst.getAllLoadedClasses()) {
+        try {
+          inst.retransformClasses(c);
+        } catch (UnmodifiableClassException e) {
+          // ignore
+        }
+      }
+    }
+  }
 }
-	
