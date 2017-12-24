@@ -39,6 +39,9 @@ public abstract class TestCase {
   /** Return the unique ids given to the measurements in this test. */
   protected abstract String[] getIds();
 
+  /** Return the measurement types given by this test. */
+  protected abstract String[] getMeasurementTypes();
+
   /**
    * Run the test, returning a HarnessPart with summary, steps and measurements.
    *
@@ -53,27 +56,10 @@ public abstract class TestCase {
     try {
       test(accessor, p);
     } catch (Throwable e) {
-      if (e instanceof RuntimeException) {
-        if (e.getCause() != null) {
-          e = e.getCause();
-        }
-      }
-      if (e instanceof InvocationTargetException) {
-        Throwable f = ((InvocationTargetException) e).getTargetException();
-        if (f != null) e = f;
-      }
+      e = unwrapException(e);
       p.setErrorSummary("An unexpected exception occurred: " + e.getClass().getName());
-      StringBuffer b = new StringBuffer();
-      b.append(String.format("<code>%s</code>: %s", e.getClass().getName(), e.getMessage()));
-      b.append("<ul>");
-      for (StackTraceElement el : e.getStackTrace()) {
-        b.append(
-            String.format(
-                "<li>at <code>%s.%s(%s:%d)</code></li>",
-                el.getClassName(), el.getMethodName(), el.getFileName(), el.getLineNumber()));
-      }
-      b.append("</ul>");
-      p.setErrorDetail(b.toString());
+      p.setErrorDetail(exceptionToString(e));
+      addMissingMeasurements(p);
     }
     return p;
   }
@@ -132,5 +118,44 @@ public abstract class TestCase {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList()))
         .collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
+  }
+
+  private static Throwable unwrapException(Throwable e) {
+    if (e instanceof RuntimeException && e.getCause() != null) {
+      return e.getCause();
+    }
+
+    if (e instanceof InvocationTargetException) {
+      Throwable f = ((InvocationTargetException) e).getTargetException();
+      if (f != null) {
+        return f;
+      }
+    }
+
+    return e;
+  }
+
+  private static String exceptionToString(Throwable e) {
+    StringBuilder b = new StringBuilder();
+    b.append(String.format("<code>%s</code>: %s", e.getClass().getName(), e.getMessage()));
+    b.append("<ul>");
+    for (StackTraceElement el : e.getStackTrace()) {
+      b.append(
+          String.format(
+              "<li>at <code>%s.%s(%s:%d)</code></li>",
+              el.getClassName(), el.getMethodName(), el.getFileName(), el.getLineNumber()));
+    }
+    b.append("</ul>");
+    return b.toString();
+  }
+
+  private void addMissingMeasurements(HarnessPart part) {
+    for (String id : getIds()) {
+      if (part.getMeasurements().stream().noneMatch(m -> id.equals(m.getId()))) {
+        for (String expected : getMeasurementTypes()) {
+          part.getMeasurements().add(new Measurement(expected, Measurement.UNAVILABLE, id));
+        }
+      }
+    }
   }
 }
