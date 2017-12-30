@@ -4,7 +4,7 @@
     <groupId>uk.ac.cam.cl.dtg.teaching</groupId>
     <artifactId>pottery-container-java</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.7-SNAPSHOTg</version>
+    <version>1.0.7-SNAPSHOT</version>
 
     <properties>
         <slf4j.version>1.7.5</slf4j.version>
