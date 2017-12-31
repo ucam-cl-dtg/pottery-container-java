@@ -23,6 +23,10 @@ import java.lang.instrument.UnmodifiableClassException;
 
 public class Premain {
 
+  /** Some classes cause the JVM to segv if we try to transform them. */
+  private static final String[] TRANSFORMATION_BLACKLIST =
+      new String[] {"java.lang.Class", "java.lang.invoke.LambdaForm"};
+
   static Instrumentation instrumentation;
 
   /**
@@ -46,12 +50,23 @@ public class Premain {
 
     if (transforming) {
       for (Class<?> c : inst.getAllLoadedClasses()) {
-        try {
-          inst.retransformClasses(c);
-        } catch (UnmodifiableClassException e) {
-          // ignore
+        if (!isBlacklisted(c)) {
+          try {
+            inst.retransformClasses(c);
+          } catch (UnmodifiableClassException e) {
+            // ignore
+          }
         }
       }
     }
+  }
+
+  private static boolean isBlacklisted(Class<?> c) {
+    for (String blacklisted : TRANSFORMATION_BLACKLIST) {
+      if (c.getName().contains(blacklisted)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
