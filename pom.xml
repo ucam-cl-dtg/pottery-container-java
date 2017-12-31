@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>uk.ac.cam.cl.dtg.teaching</groupId>
     <artifactId>pottery-container-java</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.8-SNAPSHOT</version>
 
     <properties>
         <slf4j.version>1.7.5</slf4j.version>
@@ -13,14 +12,15 @@
 
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/ucam-cl-dtg/pottery-container-java.git</developerConnection>
-    </scm>
+      <tag>HEAD</tag>
+  </scm>
 
     <dependencies>
 
         <dependency>
             <groupId>uk.ac.cam.cl.dtg.teaching</groupId>
             <artifactId>pottery-container-interface</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.7</version>
         </dependency>
 
         <dependency>
@@ -85,6 +85,13 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
+	    <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+	    </plugin>
+
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
