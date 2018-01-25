@@ -3,7 +3,7 @@
     <groupId>uk.ac.cam.cl.dtg.teaching</groupId>
     <artifactId>pottery-container-java</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.9</version>
+    <version>1.0.10-SNAPSHOT</version>
 
     <properties>
         <slf4j.version>1.7.5</slf4j.version>
@@ -12,7 +12,7 @@
 
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/ucam-cl-dtg/pottery-container-java.git</developerConnection>
-      <tag>pottery-container-java-1.0.9</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <dependencies>
